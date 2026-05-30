@@ -1,0 +1,311 @@
+{
+  "info": {
+    "_postman_id": "a3f1c2d5-8b4e-4f7a-9c1d-2e5f8a3b6c9d",
+    "name": "MockInterview API",
+    "description": "REST API платформы MockInterview для подготовки к техническим интервью.\n\n**Порядок запуска:**\n1. Выполнить `Auth / 1. Страница логина` — сохраняет XSRF-TOKEN\n2. Выполнить `Auth / 2. Войти в систему` — создаёт сессию\n3. Запускать любые запросы из папки `Answers`\n\n**Переменные коллекции:**\n- `baseUrl` — адрес сервера\n- `username` / `password` — учётные данные интервьюера\n- `answerId` — UUID ответа из базы данных",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8081",
+      "type": "string"
+    },
+    {
+      "key": "username",
+      "value": "your_interviewer_username",
+      "type": "string",
+      "description": "Имя пользователя с ролью INTERVIEWER"
+    },
+    {
+      "key": "password",
+      "value": "your_password",
+      "type": "string"
+    },
+    {
+      "key": "answerId",
+      "value": "00000000-0000-0000-0000-000000000000",
+      "type": "string",
+      "description": "UUID ответа кандидата (UserAnswer.id из БД)"
+    },
+    {
+      "key": "xsrfToken",
+      "value": "",
+      "type": "string",
+      "description": "Заполняется автоматически после запроса «1. Страница логина»"
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "description": "Аутентификация. Сессионная авторизация через форму. CSRF защита — cookie XSRF-TOKEN.",
+      "item": [
+        {
+          "name": "1. Страница логина (получить CSRF-токен)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Сохранить XSRF-TOKEN из cookie jar в переменную коллекции",
+                  "const csrfToken = pm.cookies.get('XSRF-TOKEN');",
+                  "if (csrfToken) {",
+                  "    pm.collectionVariables.set('xsrfToken', csrfToken);",
+                  "    console.log('XSRF-TOKEN сохранён: ' + csrfToken);",
+                  "} else {",
+                  "    console.warn('XSRF-TOKEN не найден. Убедитесь, что в настройках Postman включён Cookie Jar для localhost.');",
+                  "}",
+                  "",
+                  "pm.test('Страница логина доступна', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["login"]
+            },
+            "description": "Загружает HTML-страницу логина. Spring Security автоматически устанавливает cookie `XSRF-TOKEN`. Post-response скрипт сохраняет токен в переменную `xsrfToken`."
+          },
+          "response": []
+        },
+        {
+          "name": "2. Войти в систему (интервьюер)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Успешный вход (редирект или 200)', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 302]);",
+                  "});",
+                  "",
+                  "// Обновить XSRF-TOKEN после логина (Spring Security выдаёт новый)",
+                  "const newCsrf = pm.cookies.get('XSRF-TOKEN');",
+                  "if (newCsrf) {",
+                  "    pm.collectionVariables.set('xsrfToken', newCsrf);",
+                  "    console.log('XSRF-TOKEN обновлён: ' + newCsrf);",
+                  "}",
+                  "",
+                  "const jsessionid = pm.cookies.get('JSESSIONID');",
+                  "if (jsessionid) {",
+                  "    console.log('Сессия установлена: JSESSIONID=' + jsessionid);",
+                  "} else {",
+                  "    console.warn('JSESSIONID не найден — возможно, неверные учётные данные');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              },
+              {
+                "key": "X-XSRF-TOKEN",
+                "value": "{{xsrfToken}}",
+                "description": "CSRF-токен из предыдущего запроса"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "username",
+                  "value": "{{username}}",
+                  "type": "text"
+                },
+                {
+                  "key": "password",
+                  "value": "{{password}}",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["login"]
+            },
+            "description": "Авторизация через форму. Требует предварительного выполнения запроса «1. Страница логина» для получения CSRF-токена.\n\nПосле успешного входа Postman получает cookie `JSESSIONID`, который автоматически подставляется во все последующие запросы."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Answers",
+      "description": "Управление аудиоответами кандидатов. Все запросы требуют активной сессии (выполните Auth сначала).",
+      "item": [
+        {
+          "name": "Получить ответ по ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Статус 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Тело ответа — JSON', function () {",
+                  "    pm.response.to.be.json;",
+                  "});",
+                  "",
+                  "pm.test('Содержит обязательные поля', function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('id');",
+                  "    pm.expect(json).to.have.property('questionId');",
+                  "    pm.expect(json).to.have.property('recordedAt');",
+                  "});",
+                  "",
+                  "pm.test('id совпадает с запрошенным', function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.id).to.eql(pm.collectionVariables.get('answerId'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/answers/{{answerId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "answers", "{{answerId}}"]
+            },
+            "description": "Возвращает данные ответа кандидата:\n- `id` — UUID ответа\n- `questionId` — UUID вопроса\n- `transcribedText` — текст расшифровки (null если не выполнена)\n- `recordedAt` — дата и время записи"
+          },
+          "response": [
+            {
+              "name": "Пример успешного ответа",
+              "status": "OK",
+              "code": 200,
+              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "body": "{\n  \"id\": \"3fa85f64-5717-4562-b3fc-2c963f66afa6\",\n  \"questionId\": \"1a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d\",\n  \"transcribedText\": \"Паттерн Singleton гарантирует, что класс имеет только один экземпляр...\",\n  \"recordedAt\": \"2026-05-28T10:30:00\"\n}",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/answers/{{answerId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "answers", "{{answerId}}"]
+                }
+              }
+            },
+            {
+              "name": "Ответ не найден",
+              "status": "Not Found",
+              "code": 404,
+              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "body": "{\n  \"status\": 404,\n  \"error\": \"Not Found\",\n  \"message\": \"Answer not found\"\n}",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/answers/{{answerId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "answers", "{{answerId}}"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Транскрибировать аудиоответ",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Статус 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Тело ответа — JSON', function () {",
+                  "    pm.response.to.be.json;",
+                  "});",
+                  "",
+                  "pm.test('transcribedText заполнен после транскрибации', function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('transcribedText');",
+                  "    pm.expect(json.transcribedText).to.not.be.null;",
+                  "    pm.expect(json.transcribedText.length).to.be.greaterThan(0);",
+                  "});",
+                  "",
+                  "pm.test('Время ответа < 30 секунд', function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(30000);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": [],
+                  "description": "Аудиофайл ответа кандидата (поддерживаются: wav, mp3, webm, ogg, flac)"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/answers/{{answerId}}/transcribe",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "answers", "{{answerId}}", "transcribe"]
+            },
+            "description": "Принимает аудиофайл, загружает его в AssemblyAI и возвращает обновлённый ответ с заполненным полем `transcribedText`.\n\n**Как использовать:**\n1. В секции Body выберите файл в поле `file`\n2. Нажмите Send\n\n⚠️ Запрос может занять 10–30 секунд (зависит от длины аудио и скорости AssemblyAI)."
+          },
+          "response": [
+            {
+              "name": "Пример успешной транскрибации",
+              "status": "OK",
+              "code": 200,
+              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "body": "{\n  \"id\": \"3fa85f64-5717-4562-b3fc-2c963f66afa6\",\n  \"questionId\": \"1a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d\",\n  \"transcribedText\": \"Паттерн Singleton гарантирует единственный экземпляр класса. Реализуется через приватный конструктор и статический метод getInstance...\",\n  \"recordedAt\": \"2026-05-28T10:30:00\"\n}",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {"key": "file", "type": "file", "src": "answer.webm"}
+                  ]
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/answers/{{answerId}}/transcribe",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "answers", "{{answerId}}", "transcribe"]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

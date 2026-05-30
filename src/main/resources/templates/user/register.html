@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/auth :: layout(title='Регистрация', content=~{:: content})}">
+<body>
+<th:block th:fragment="content">
+    <div class="auth-layout">
+        <div class="auth-layout__brand">
+            <div class="auth-layout__logo">
+                <svg viewBox="0 0 24 24"><path d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>
+                MockInterview
+            </div>
+            <h2 class="auth-layout__tagline">Начните путь к карьере мечты</h2>
+            <p class="auth-layout__desc">Создайте аккаунт кандидата, проходите скрининги по реальным вакансиям и получайте обратную связь</p>
+            <ul class="auth-layout__features">
+                <li>
+                    <svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                    Бесплатная регистрация за 1 минуту
+                </li>
+                <li>
+                    <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+                    Сотни реальных вакансий
+                </li>
+                <li>
+                    <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                    Аналитика ваших ответов
+                </li>
+            </ul>
+        </div>
+
+        <div class="auth-layout__form-wrap">
+            <div class="auth-card">
+                <h1 class="auth-heading">Создать аккаунт</h1>
+                <p class="auth-tagline" style="text-align:left;margin-bottom:1.5rem;">Регистрация кандидата</p>
+
+                <form th:action="@{/register/user}" th:object="${registerForm}" method="post">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Имя пользователя <span style="color:var(--copper)">*</span></label>
+                        <input type="text" id="username" th:field="*{username}"
+                               th:class="${#fields.hasErrors('username')} ? 'form-control is-invalid' : 'form-control'"
+                               placeholder="Введите имя пользователя" autofocus>
+                        <div th:if="${#fields.hasErrors('username')}" class="invalid-feedback">
+                            <span th:errors="*{username}"></span>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email <span style="color:var(--copper)">*</span></label>
+                        <input type="email" id="email" th:field="*{email}"
+                               th:class="${#fields.hasErrors('email')} ? 'form-control is-invalid' : 'form-control'"
+                               placeholder="example@mail.ru">
+                        <div th:if="${#fields.hasErrors('email')}" class="invalid-feedback">
+                            <span th:errors="*{email}"></span>
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <label for="password" class="form-label">Пароль <span style="color:var(--copper)">*</span></label>
+                        <input type="password" id="password" th:field="*{password}"
+                               th:class="${#fields.hasErrors('password')} ? 'form-control is-invalid' : 'form-control'"
+                               placeholder="Минимум 8 символов">
+                        <div th:if="${#fields.hasErrors('password')}" class="invalid-feedback">
+                            <span th:errors="*{password}"></span>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 btn-lg">Создать аккаунт</button>
+                </form>
+
+                <hr class="divider">
+                <p class="auth-footer-text">Уже есть аккаунт? <a href="/login">Войти</a></p>
+            </div>
+            <p class="auth-copyright">&copy; 2025 MockInterview</p>
+        </div>
+    </div>
+</th:block>
+</body>
+</html>

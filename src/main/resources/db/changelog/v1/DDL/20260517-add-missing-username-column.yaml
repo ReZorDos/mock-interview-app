@@ -1,0 +1,17 @@
+databaseChangeLog:
+  - changeSet:
+      id: 5-add-missing-username
+      author: rezordos
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - columnExists:
+                tableName: users
+                columnName: username
+      changes:
+        - addColumn:
+            tableName: users
+            columns:
+              - column:
+                  name: username
+                  type: VARCHAR(255)

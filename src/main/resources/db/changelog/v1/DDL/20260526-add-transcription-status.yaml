@@ -1,0 +1,14 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20260526-add-transcription-status
+      author: ReZorDoc
+      changes:
+        - addColumn:
+            tableName: user_answer
+            columns:
+              - column:
+                  name: transcription_status
+                  type: VARCHAR(20)
+                  defaultValue: PENDING
+                  constraints:
+                    nullable: false

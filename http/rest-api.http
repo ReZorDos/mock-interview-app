@@ -1,0 +1,79 @@
+@baseUrl = http://localhost:8081
+
+@username = your_interviewer_username
+@password  = your_password
+
+@answerId = 00000000-0000-0000-0000-000000000000
+
+
+### 1. Страница логина — устанавливает XSRF-TOKEN cookie
+GET {{baseUrl}}/login
+
+> {%
+  var setCookieHeaders = response.headers.valuesOf("Set-Cookie");
+  for (var i = 0; i < setCookieHeaders.length; i++) {
+    var header = setCookieHeaders[i];
+    if (header.indexOf("XSRF-TOKEN=") >= 0) {
+      var token = header.split("XSRF-TOKEN=")[1].split(";")[0];
+      client.global.set("xsrfToken", token);
+      client.log("Сохранён XSRF-TOKEN: " + token);
+    }
+  }
+%}
+
+
+### 2. Войти в систему
+POST {{baseUrl}}/login
+Content-Type: application/x-www-form-urlencoded
+X-XSRF-TOKEN: {{xsrfToken}}
+
+username={{username}}&password={{password}}
+
+> {%
+  client.test("Успешный вход", function() {
+    client.assert(response.status === 200 || response.status === 302,
+      "Ожидался статус 200 или 302, получен: " + response.status);
+  });
+%}
+
+
+
+### 3. Получить ответ по IDt
+GET {{baseUrl}}/api/v1/answers/{{answerId}}
+Accept: application/json
+
+> {%
+  client.test("Статус 200", function() {
+    client.assert(response.status === 200,
+      "Ожидался 200, получен: " + response.status);
+  });
+  client.test("Ответ содержит id", function() {
+    var body = response.body;
+    client.assert(body["id"] !== undefined, "Поле 'id' отсутствует");
+    client.assert(body["questionId"] !== undefined, "Поле 'questionId' отсутствует");
+  });
+%}
+
+
+### 4. Транскрибировать аудиоответ
+POST {{baseUrl}}/api/v1/answers/{{answerId}}/transcribe
+Content-Type: multipart/form-data; boundary=----MockInterviewBoundary
+
+------MockInterviewBoundary
+Content-Disposition: form-data; name="file"; filename="answer.webm"
+Content-Type: audio/webm
+
+< ./answer.webm
+------MockInterviewBoundary--
+
+> {%
+  client.test("Статус 200", function() {
+    client.assert(response.status === 200,
+      "Ожидался 200, получен: " + response.status);
+  });
+  client.test("Поле transcribedText присутствует", function() {
+    var body = response.body;
+    client.assert(body["transcribedText"] !== undefined,
+      "Поле 'transcribedText' отсутствует");
+  });
+%}

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{layout/default :: layout(title=${companyName} + ' — Скрининги', activeLink='screenings', content=~{:: content}, scripts=null)}">
+<body>
+<th:block th:fragment="content">
+  <main class="site-main">
+    <div class="page-wrap page-wrap--medium">
+
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/interviewer/screenings">Скрининги</a></li>
+                <li class="breadcrumb-item active" th:text="${companyName}"></li>
+            </ol>
+        </nav>
+
+        <div class="page-header" style="margin-bottom:1.25rem;">
+            <div>
+                <h1 class="page-title" th:text="${companyName}"></h1>
+                <p class="page-subtitle"
+                   th:text="${vacancies.isEmpty()} ? 'Вакансий нет' : 'Вакансий: ' + ${vacancies.totalElements}"></p>
+            </div>
+            <a href="/interviewer/screenings" class="btn btn-outline-secondary btn-sm">← Компании</a>
+        </div>
+
+        <div th:if="${vacancies.isEmpty()}" class="empty-state">
+            <div class="empty-state__icon">
+                <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+            </div>
+            <h3 class="empty-state__title">Вакансий пока нет</h3>
+            <p class="empty-state__text">У этой компании ещё нет вакансий с откликами</p>
+        </div>
+
+        <div th:unless="${vacancies.isEmpty()}" class="vacancy-list">
+            <div th:each="v : ${vacancies.content}" class="vcard">
+                <div class="vcard__top">
+                    <div>
+                        <span class="vcard__title" th:text="${v.title}"></span>
+                        <div class="vcard__meta">
+                            <span th:text="${v.vacancyLevel}"
+                                  th:class="${'badge ' + (v.vacancyLevel.name() == 'JUNIOR' ? 'bg-success' : (v.vacancyLevel.name() == 'MIDDLE' ? 'bg-warning' : 'bg-danger'))}"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <p th:if="${v.description != null and !#strings.isEmpty(v.description)}"
+                   class="vcard__desc"
+                   th:text="${#strings.length(v.description) > 120 ? #strings.substring(v.description, 0, 120) + '...' : v.description}"></p>
+
+                <div class="vcard__tags">
+                    <span th:if="${v.city != null and !#strings.isEmpty(v.city)}" class="vcard__tag">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                        <span th:text="${v.city}"></span>
+                    </span>
+                    <span th:if="${v.schedule != null}" class="vcard__tag">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                        <span th:text="${v.schedule.displayName}"></span>
+                    </span>
+                </div>
+
+                <div class="vcard__bottom">
+                    <span class="vcard__date" th:text="${'Создана ' + #temporals.format(v.createdAt, 'dd.MM.yyyy')}"></span>
+                    <a th:href="@{/interviewer/screenings/company/{cid}/vacancy/{vid}(cid=${companyId},vid=${v.id})}"
+                       class="btn btn-sm btn-outline-primary">Отклики →</a>
+                </div>
+            </div>
+        </div>
+
+        <div th:if="${totalPages > 1}" class="pagination-bar">
+            <a th:if="${currentPage > 1}"
+               th:href="@{/interviewer/screenings/company/{id}(id=${companyId},page=${currentPage - 2})}"
+               class="pagination-bar__page">←</a>
+            <div class="pagination-bar__pages">
+                <th:block th:each="i : ${#numbers.sequence(1, totalPages)}">
+                    <a th:if="${i >= currentPage - 2 and i <= currentPage + 2}"
+                       th:href="@{/interviewer/screenings/company/{id}(id=${companyId},page=${i - 1})}"
+                       th:text="${i}"
+                       th:class="${'pagination-bar__page' + (i == currentPage ? ' pagination-bar__page--active' : '')}"></a>
+                </th:block>
+            </div>
+            <a th:if="${currentPage < totalPages}"
+               th:href="@{/interviewer/screenings/company/{id}(id=${companyId},page=${currentPage})}"
+               class="pagination-bar__page">→</a>
+        </div>
+
+    </div>
+  </main>
+</th:block>
+</body>
+</html>

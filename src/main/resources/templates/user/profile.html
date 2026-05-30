@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{layout/default :: layout(title='Профиль', activeLink=null, content=~{:: content}, scripts=null)}">
+<body>
+<th:block th:fragment="content">
+  <main class="site-main">
+    <div class="page-wrap page-wrap--narrow">
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/home">Главная</a></li>
+                <li class="breadcrumb-item active">Профиль</li>
+            </ol>
+        </nav>
+
+        <div class="d-flex align-items-center gap-4 mb-4">
+            <div class="profile-avatar"
+                 th:text="${#strings.toUpperCase(#strings.substring(#authentication.name, 0, 1))}">П</div>
+            <div>
+                <h1 class="page-title" th:text="${#authentication.name}">Пользователь</h1>
+                <p class="page-subtitle">Настройки вашего аккаунта</p>
+            </div>
+        </div>
+
+        <div th:if="${param.success}" class="alert alert-success mb-4">
+            Данные аккаунта успешно обновлены
+        </div>
+        <div sec:authorize="hasRole('USER')" th:if="${param.questionnaireSaved}" class="alert alert-success mb-4">
+            Анкета успешно сохранена
+        </div>
+        <div th:if="${error}" class="alert alert-danger mb-4" th:text="${error}"></div>
+
+        <div class="card mb-4">
+            <div class="card-header">Данные аккаунта</div>
+            <div class="card-body">
+                <form th:action="@{/profile}" th:object="${profileForm}" method="post">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">
+                            Имя пользователя <span style="color:var(--copper)">*</span>
+                        </label>
+                        <input type="text" id="username" th:field="*{username}"
+                               th:class="${#fields.hasErrors('username')} ? 'form-control is-invalid' : 'form-control'"
+                               placeholder="Введите имя пользователя">
+                        <div th:if="${#fields.hasErrors('username')}" class="invalid-feedback">
+                            <span th:errors="*{username}"></span>
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <label for="newPassword" class="form-label">Новый пароль</label>
+                        <input type="password" id="newPassword" th:field="*{newPassword}"
+                               th:class="${#fields.hasErrors('newPassword')} ? 'form-control is-invalid' : 'form-control'"
+                               placeholder="Оставьте пустым, чтобы не менять">
+                        <div th:if="${#fields.hasErrors('newPassword')}" class="invalid-feedback">
+                            <span th:errors="*{newPassword}"></span>
+                        </div>
+                        <div class="form-text">Минимум 8 символов</div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Сохранить данные</button>
+                </form>
+            </div>
+        </div>
+
+        <div sec:authorize="hasRole('USER')" class="card">
+            <div class="card-header">Анкета кандидата</div>
+            <div class="card-body">
+                <p class="text-muted mb-4" style="font-size:.875rem;">
+                    Интервьюер увидит эту информацию при просмотре ваших ответов на скрининге.
+                </p>
+                <form th:action="@{/profile/questionnaire}" th:object="${questionnaire}" method="post">
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <label for="age" class="form-label">Возраст</label>
+                            <input type="number" id="age" th:field="*{age}"
+                                   th:class="${#fields.hasErrors('age')} ? 'form-control is-invalid' : 'form-control'"
+                                   placeholder="25" min="14" max="100">
+                            <div th:if="${#fields.hasErrors('age')}" class="invalid-feedback">
+                                <span th:errors="*{age}"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <label for="education" class="form-label">Образование</label>
+                            <input type="text" id="education" th:field="*{education}"
+                                   th:class="${#fields.hasErrors('education')} ? 'form-control is-invalid' : 'form-control'"
+                                   placeholder="Например: ИТМО, бакалавр, программная инженерия">
+                            <div th:if="${#fields.hasErrors('education')}" class="invalid-feedback">
+                                <span th:errors="*{education}"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="experience" class="form-label">Опыт работы</label>
+                        <textarea id="experience" th:field="*{experience}" rows="3"
+                                  class="form-control"
+                                  placeholder="Опишите ваш опыт работы: компании, должности, период..."></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="aboutMe" class="form-label">О себе</label>
+                        <textarea id="aboutMe" th:field="*{aboutMe}" rows="3"
+                                  class="form-control"
+                                  placeholder="Расскажите о себе, своих целях и интересах..."></textarea>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="skills" class="form-label">Навыки</label>
+                        <input type="text" id="skills" th:field="*{skills}"
+                               class="form-control"
+                               placeholder="Java, Spring Boot, SQL, Docker">
+                        <div class="form-text">Перечислите навыки через запятую</div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Сохранить анкету</button>
+                </form>
+            </div>
+        </div>
+
+    </div>
+  </main>
+</th:block>
+</body>
+</html>

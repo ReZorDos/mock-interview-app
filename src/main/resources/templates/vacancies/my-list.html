@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{layout/default :: layout(title='Мои вакансии', activeLink='my-vacancies', content=~{:: content}, scripts=null)}">
+<body>
+<th:block th:fragment="content">
+  <main class="site-main">
+    <div class="page-wrap">
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/vacancy">Вакансии</a></li>
+                <li class="breadcrumb-item active">Мои вакансии</li>
+            </ol>
+        </nav>
+
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Мои вакансии</h1>
+                <p class="page-subtitle">Управление созданными вами позициями</p>
+            </div>
+            <a href="/vacancy/create" class="btn btn-primary">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Создать вакансию
+            </a>
+        </div>
+
+        <div th:if="${vacancies.empty}" class="empty-state">
+            <div class="empty-state__icon">
+                <svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+            </div>
+            <h3 class="empty-state__title">Нет созданных вакансий</h3>
+            <p class="empty-state__text">Создайте первую вакансию, чтобы начать принимать кандидатов</p>
+        </div>
+
+        <div th:unless="${vacancies.empty}" class="vacancy-list">
+            <div th:each="v : ${vacancies}" class="vcard">
+                <div class="vcard__top">
+                    <div>
+                        <a th:href="@{/vacancy/{id}(id=${v.id})}" th:text="${v.title}" class="vcard__title"></a>
+                        <div class="vcard__meta">
+                            <span th:text="${v.vacancyLevel}"
+                                  th:class="${'badge ' + (v.vacancyLevel == 'JUNIOR' ? 'bg-success' : (v.vacancyLevel == 'MIDDLE' ? 'bg-warning' : 'bg-danger'))}"></span>
+                            <span th:if="${v.archived}" class="badge bg-secondary">В архиве</span>
+                            <span class="vcard__company">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                                <span th:text="${v.company.name}"></span>
+                            </span>
+                        </div>
+                    </div>
+                    <span th:if="${v.salaryFrom != null or v.salaryTo != null}" class="vcard__salary">
+                        <th:block th:if="${v.salaryFrom != null and v.salaryTo != null}"
+                                  th:text="${#numbers.formatInteger(v.salaryFrom,0,'WHITESPACE') + ' – ' + #numbers.formatInteger(v.salaryTo,0,'WHITESPACE') + ' ₽'}"></th:block>
+                        <th:block th:if="${v.salaryFrom != null and v.salaryTo == null}"
+                                  th:text="${'от ' + #numbers.formatInteger(v.salaryFrom,0,'WHITESPACE') + ' ₽'}"></th:block>
+                        <th:block th:if="${v.salaryFrom == null and v.salaryTo != null}"
+                                  th:text="${'до ' + #numbers.formatInteger(v.salaryTo,0,'WHITESPACE') + ' ₽'}"></th:block>
+                    </span>
+                </div>
+
+                <p th:if="${v.description != null and !#strings.isEmpty(v.description)}"
+                   class="vcard__desc"
+                   th:text="${#strings.length(v.description) > 160 ? #strings.substring(v.description, 0, 160) + '...' : v.description}"></p>
+                <p th:unless="${v.description != null and !#strings.isEmpty(v.description)}"
+                   class="vcard__desc vcard__desc--empty">Описание не указано</p>
+
+                <div class="vcard__tags">
+                    <span th:if="${v.city != null and !#strings.isEmpty(v.city)}" class="vcard__tag">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                        <span th:text="${v.city}"></span>
+                    </span>
+                    <span th:if="${v.schedule != null}" class="vcard__tag">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                        <span th:text="${v.schedule.displayName}"></span>
+                    </span>
+                </div>
+
+                <div th:if="${v.skills != null and !v.skills.isEmpty()}" class="vcard__skills">
+                    <span th:each="skill : ${v.skills}" class="badge bg-secondary" th:text="${skill.name}"></span>
+                </div>
+
+                <div class="vcard__bottom">
+                    <span class="vcard__date" th:text="${'Опубликовано ' + #temporals.format(v.createdAt, 'dd.MM.yyyy')}"></span>
+                    <div class="vcard__actions">
+                        <a th:href="@{/vacancy/{id}(id=${v.id})}" class="btn btn-sm btn-outline-primary">Смотреть</a>
+                        <a th:unless="${v.archived}" th:href="@{/vacancy/{id}/edit(id=${v.id})}" class="btn btn-sm btn-outline-secondary">Изменить</a>
+                        <form th:unless="${v.archived}"
+                              th:action="@{/vacancy/{id}/archive(id=${v.id})}"
+                              method="post" class="d-inline">
+                            <button type="submit" class="btn btn-sm btn-outline-warning">В архив</button>
+                        </form>
+                        <form th:if="${v.archived}"
+                              th:action="@{/vacancy/{id}/unarchive(id=${v.id})}"
+                              method="post" class="d-inline">
+                            <button type="submit" class="btn btn-sm btn-outline-success">Из архива</button>
+                        </form>
+                        <form th:action="@{/vacancy/{id}/delete(id=${v.id})}"
+                              method="post"
+                              onsubmit="return confirm('Удалить вакансию?')"
+                              class="d-inline">
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Удалить</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div th:if="${totalPages > 1}" class="pagination-bar">
+            <a th:if="${currentPage > 1}"
+               th:href="@{/vacancy/my(page=${currentPage - 1})}"
+               class="pagination-bar__page">←</a>
+            <div class="pagination-bar__pages">
+                <th:block th:each="i : ${#numbers.sequence(1, totalPages)}">
+                    <a th:if="${i >= currentPage - 2 and i <= currentPage + 2}"
+                       th:href="@{/vacancy/my(page=${i})}"
+                       th:text="${i}"
+                       th:class="${'pagination-bar__page' + (i == currentPage ? ' pagination-bar__page--active' : '')}"></a>
+                </th:block>
+            </div>
+            <a th:if="${currentPage < totalPages}"
+               th:href="@{/vacancy/my(page=${currentPage + 1})}"
+               class="pagination-bar__page">→</a>
+        </div>
+    </div>
+  </main>
+</th:block>
+</body>
+</html>

@@ -1,0 +1,15 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20260518-add-feedback-decision
+      author: rezordos
+      changes:
+        - addColumn:
+            tableName: recruiter_review
+            columns:
+              - column:
+                  name: decision
+                  type: VARCHAR(20)
+        - dropNotNullConstraint:
+            tableName: recruiter_review
+            columnName: rating
+            columnDataType: INT

@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{layout/default :: layout(title='Мои отклики', activeLink='feedbacks', content=~{:: content}, scripts=null)}">
+<body>
+<th:block th:fragment="content">
+  <main class="site-main">
+    <div class="page-wrap page-wrap--medium">
+
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Мои скрининги</h1>
+                <p class="page-subtitle"
+                   th:text="${screenings.totalElements == 0}
+                       ? 'Вы ещё не проходили ни одного скрининга'
+                       : 'Всего: ' + ${screenings.totalElements}">
+                </p>
+            </div>
+            <a href="/vacancy" class="btn btn-primary">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                     stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Найти вакансию
+            </a>
+        </div>
+
+        <div class="mb-4 d-flex gap-2 flex-wrap">
+            <a th:href="@{/feedback/my}"
+               th:class="'btn btn-sm ' + (filter == null ? 'btn-primary' : 'btn-outline-primary')">Все</a>
+            <a th:href="@{/feedback/my(filter='NO_ANSWER')}"
+               th:class="'btn btn-sm ' + (filter == 'NO_ANSWER' ? 'btn-warning' : 'btn-outline-warning')">Без ответа</a>
+            <a th:href="@{/feedback/my(filter='ACCEPTED')}"
+               th:class="'btn btn-sm ' + (filter == 'ACCEPTED' ? 'btn-success' : 'btn-outline-success')">Принято</a>
+            <a th:href="@{/feedback/my(filter='REJECTED')}"
+               th:class="'btn btn-sm ' + (filter == 'REJECTED' ? 'btn-danger' : 'btn-outline-danger')">Отказ</a>
+        </div>
+
+        <div th:if="${screenings.totalElements == 0}" class="empty-state">
+            <div class="empty-state__icon">
+                <svg viewBox="0 0 24 24"><path d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>
+            </div>
+            <h3 class="empty-state__title">Скринингов пока нет</h3>
+            <p class="empty-state__text">Откликнитесь на вакансию, чтобы пройти скрининг и получить обратную связь</p>
+            <a href="/vacancy" class="btn btn-primary mt-3">Смотреть вакансии</a>
+        </div>
+
+        <div th:each="s : ${screenings.content}" class="card mb-3">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-2 flex-wrap gap-2">
+                    <a th:href="@{/vacancy/{id}(id=${s.vacancyId})}"
+                       th:text="${s.vacancyTitle}"
+                       style="font-weight:600;font-size:1rem;color:var(--ink);"
+                       class="tbl-link"></a>
+
+                    <span th:if="${s.inProgress()}"
+                          class="badge bg-info text-dark">В процессе</span>
+                    <span th:if="${s.completed() and !s.hasFeedback()}"
+                          class="badge bg-warning text-dark">Ожидает оценки</span>
+                    <span th:if="${s.hasFeedback() and s.decision != null and s.decision.name() == 'ACCEPTED'}"
+                          class="badge bg-success">Принято</span>
+                    <span th:if="${s.hasFeedback() and s.decision != null and s.decision.name() == 'REJECTED'}"
+                          class="badge bg-danger">Отказ</span>
+                </div>
+
+                <div class="d-flex gap-3 flex-wrap mb-3" style="font-size:.8125rem;color:var(--ink-500);">
+                    <span>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                             stroke-linecap="round" stroke-linejoin="round" class="me-1">
+                            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                        </svg>
+                        Начат: <span th:text="${#temporals.format(s.startedAt, 'dd.MM.yyyy HH:mm')}"></span>
+                    </span>
+                    <span th:if="${s.finishedAt != null}">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                             stroke-linecap="round" stroke-linejoin="round" class="me-1">
+                            <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                        Завершён: <span th:text="${#temporals.format(s.finishedAt, 'dd.MM.yyyy HH:mm')}"></span>
+                    </span>
+                    <span th:if="${s.reviewedAt != null}">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                             stroke-linecap="round" stroke-linejoin="round" class="me-1">
+                            <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+                        </svg>
+                        Оценён: <span th:text="${#temporals.format(s.reviewedAt, 'dd.MM.yyyy HH:mm')}"></span>
+                    </span>
+                </div>
+
+                <div th:if="${s.hasFeedback() and s.comment != null and !#strings.isEmpty(s.comment)}"
+                     style="background:var(--ivory);border:1px solid var(--border);border-radius:var(--r-sm);padding:1rem;">
+                    <p class="text-muted mb-1" style="font-size:.8125rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;">Комментарий рекрутера</p>
+                    <p class="mb-0" th:text="${s.comment}"></p>
+                </div>
+
+                <p th:if="${s.completed() and !s.hasFeedback()}"
+                   class="text-muted mb-0" style="font-size:.875rem;">
+                    Рекрутер ещё не оставил оценку — результат появится здесь.
+                </p>
+
+                <a th:if="${s.inProgress()}"
+                   th:href="@{/screening/start/{id}(id=${s.vacancyId})}"
+                   class="btn btn-sm btn-outline-primary mt-2">
+                    Продолжить скрининг →
+                </a>
+            </div>
+        </div>
+
+        <nav th:if="${screenings.totalPages > 1}" aria-label="Страницы скринингов" class="mt-4">
+            <ul class="pagination justify-content-center">
+
+                <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                    <a class="page-link"
+                       th:href="@{/feedback/my(page=${currentPage - 1},filter=${filter})}"
+                       aria-label="Предыдущая">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="15 18 9 12 15 6"/>
+                        </svg>
+                    </a>
+                </li>
+
+                <th:block th:with="
+                    total=${screenings.totalPages},
+                    cur=${currentPage},
+                    from=${cur - 2 < 0 ? 0 : cur - 2},
+                    to=${cur + 2 >= total ? total - 1 : cur + 2}">
+
+                    <li class="page-item" th:if="${from > 0}">
+                        <a class="page-link" th:href="@{/feedback/my(page=0,filter=${filter})}">1</a>
+                    </li>
+                    <li class="page-item disabled" th:if="${from > 1}">
+                        <span class="page-link">…</span>
+                    </li>
+
+                    <li th:each="i : ${#numbers.sequence(from, to)}"
+                        class="page-item"
+                        th:classappend="${i == cur} ? 'active'">
+                        <a class="page-link"
+                           th:href="@{/feedback/my(page=${i},filter=${filter})}"
+                           th:text="${i + 1}"></a>
+                    </li>
+
+                    <li class="page-item disabled" th:if="${to < total - 2}">
+                        <span class="page-link">…</span>
+                    </li>
+                    <li class="page-item" th:if="${to < total - 1}">
+                        <a class="page-link" th:href="@{/feedback/my(page=${total - 1},filter=${filter})}" th:text="${total}"></a>
+                    </li>
+                </th:block>
+
+                <li class="page-item" th:classappend="${currentPage + 1 >= screenings.totalPages} ? 'disabled'">
+                    <a class="page-link"
+                       th:href="@{/feedback/my(page=${currentPage + 1},filter=${filter})}"
+                       aria-label="Следующая">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="9 18 15 12 9 6"/>
+                        </svg>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+    </div>
+  </main>
+</th:block>
+</body>
+</html>

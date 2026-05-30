@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<body>
+<nav th:fragment="nav(activeLink)" class="site-nav">
+    <div class="container">
+        <a href="/home" class="site-nav__brand">
+            <svg viewBox="0 0 24 24"><path d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>
+            MockInterview
+        </a>
+        <div class="site-nav__links" id="navLinks">
+            <a href="/vacancy"
+               class="site-nav__link"
+               th:classappend="${activeLink == 'vacancies'} ? ' site-nav__link--active'">Вакансии</a>
+            <a href="/company/browse"
+               class="site-nav__link"
+               th:classappend="${activeLink == 'companies'} ? ' site-nav__link--active'">Компании</a>
+            <a sec:authorize="hasRole('INTERVIEWER')" href="/vacancy/my"
+               class="site-nav__link"
+               th:classappend="${activeLink == 'my-vacancies'} ? ' site-nav__link--active'">Мои вакансии</a>
+            <a sec:authorize="hasRole('INTERVIEWER')" href="/company"
+               class="site-nav__link"
+               th:classappend="${activeLink == 'companies-manage'} ? ' site-nav__link--active'">Управление</a>
+            <a sec:authorize="hasRole('INTERVIEWER')" href="/interviewer/screenings"
+               class="site-nav__link"
+               th:classappend="${activeLink == 'screenings'} ? ' site-nav__link--active'">Скрининги</a>
+            <a sec:authorize="hasRole('USER')" href="/feedback/my"
+               class="site-nav__link"
+               th:classappend="${activeLink == 'feedbacks'} ? ' site-nav__link--active'">Мои отклики</a>
+        </div>
+        <span class="site-nav__spacer"></span>
+        <div class="site-nav__actions">
+            <a href="/profile" class="btn btn-sm btn-outline-secondary">Профиль</a>
+            <form th:action="@{/logout}" method="post" class="d-inline">
+                <button type="submit" class="btn btn-sm btn-outline-secondary">Выйти</button>
+            </form>
+        </div>
+        <button class="nav-hamburger" id="navToggle" aria-label="Меню" aria-expanded="false">
+            <span></span><span></span><span></span>
+        </button>
+    </div>
+</nav>
+</body>
+</html>

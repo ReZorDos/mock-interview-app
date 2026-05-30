@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/screening :: layout(title=${screening.vacancyTitle} + ' — Скрининг', content=~{:: content}, scripts=~{:: extra-scripts})}">
+<body>
+<th:block th:fragment="content">
+  <main class="site-main">
+    <div class="page-wrap page-wrap--narrow">
+
+        <div class="mb-5">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="text-muted" style="font-size:.875rem;" th:text="${screening.vacancyTitle}"></span>
+                <span class="text-muted" style="font-size:.875rem;"
+                      th:text="'Вопрос ' + (${screening.currentIndex} + 1) + ' из ' + ${screening.totalQuestions}"></span>
+            </div>
+            <div class="progress">
+                <div class="progress-bar"
+                     th:style="'width:' + (${(screening.currentIndex * 100) / screening.totalQuestions}) + '%'"></div>
+            </div>
+        </div>
+
+        <div class="card mb-4" style="border-top:3px solid var(--emerald) !important;">
+            <div class="card-body" style="padding:2rem;">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <span th:if="${screening.currentQuestion.category != null and !#strings.isEmpty(screening.currentQuestion.category)}"
+                          class="badge bg-secondary"
+                          th:text="${screening.currentQuestion.category}"></span>
+                    <span class="ms-auto" th:text="${screening.currentQuestion.difficulty}"
+                          th:class="${'badge ' + (screening.currentQuestion.difficulty.name() == 'EASY' ? 'bg-success' : (screening.currentQuestion.difficulty.name() == 'MEDIUM' ? 'bg-warning' : 'bg-danger'))}"></span>
+                </div>
+                <p style="font-size:1.125rem;font-weight:500;margin:0;color:var(--ink);line-height:1.55;"
+                   th:text="${screening.currentQuestion.text}"></p>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-body" style="padding:2rem;">
+                <h2 style="font-family:var(--font-display);font-size:1.125rem;font-weight:400;margin-bottom:1.25rem;color:var(--ink);">
+                    Запись ответа
+                </h2>
+
+                <div id="statusBlock" style="font-size:.875rem;color:var(--ink-500);margin-bottom:.5rem;min-height:1.5rem;">
+                    Нажмите «Начать запись» для записи ответа
+                </div>
+
+                <div class="recorder-bars" id="recorderBars">
+                    <div class="recorder-bars__bar"></div>
+                    <div class="recorder-bars__bar"></div>
+                    <div class="recorder-bars__bar"></div>
+                    <div class="recorder-bars__bar"></div>
+                    <div class="recorder-bars__bar"></div>
+                    <div class="recorder-bars__bar"></div>
+                    <div class="recorder-bars__bar"></div>
+                </div>
+
+                <div class="d-flex gap-2 mb-4">
+                    <button id="startBtn" class="btn btn-danger" type="button">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="12" cy="12" r="8"/></svg>
+                        Начать запись
+                    </button>
+                    <button id="stopBtn" class="btn btn-outline-secondary" type="button" disabled>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>
+                        Остановить
+                    </button>
+                </div>
+
+                <audio id="preview" controls class="mb-4" style="display:none;width:100%;"></audio>
+
+                <form id="answerForm"
+                      th:action="@{/screening/{id}/answer(id=${screening.progressId})}"
+                      method="post" enctype="multipart/form-data">
+                    <input type="file" id="audioInput" name="audio" hidden accept="audio/*">
+                    <button id="submitBtn" type="submit" class="btn btn-primary w-100 btn-lg" disabled>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                        Отправить ответ
+                    </button>
+                </form>
+            </div>
+        </div>
+
+    </div>
+  </main>
+</th:block>
+<th:block th:fragment="extra-scripts">
+    <script src="/js/recorder.js"></script>
+    <script th:inline="javascript">
+        window.SCREENING_PROGRESS_ID = /*[[${screening.progressId}]]*/ '';
+    </script>
+    <script src="/js/screening-question.js"></script>
+</th:block>
+</body>
+</html>

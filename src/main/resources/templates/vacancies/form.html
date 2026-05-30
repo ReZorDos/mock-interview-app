@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{layout/default :: layout(title='Создать вакансию', activeLink='my-vacancies', content=~{:: content}, scripts=~{:: extra-scripts})}">
+<body>
+<th:block th:fragment="content">
+  <main class="site-main">
+    <div class="page-wrap page-wrap--narrow">
+
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/vacancy">Вакансии</a></li>
+                <li class="breadcrumb-item active"
+                    th:text="${vacancyRequest.id != null ? 'Редактировать' : 'Создать вакансию'}"></li>
+            </ol>
+        </nav>
+
+        <h1 class="page-title mb-4"
+            th:text="${vacancyRequest.id != null ? 'Редактировать вакансию' : 'Создать вакансию'}"></h1>
+
+        <div class="card">
+            <div class="card-body" style="padding:2rem;">
+                <form th:action="${vacancyRequest.id != null} ? '/vacancy/' + ${vacancyRequest.id} + '/edit' : '/vacancy/create'"
+                      th:object="${vacancyRequest}" method="post">
+
+                    <div class="mb-3">
+                        <label for="title" class="form-label">Название <span style="color:var(--copper)">*</span></label>
+                        <input type="text" id="title" th:field="*{title}"
+                               th:class="${#fields.hasErrors('title')} ? 'form-control is-invalid' : 'form-control'"
+                               placeholder="Например: Java Backend Developer">
+                        <div th:if="${#fields.hasErrors('title')}" class="invalid-feedback">
+                            <span th:errors="*{title}"></span>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Описание</label>
+                        <textarea id="description" th:field="*{description}" rows="4"
+                                  th:class="${#fields.hasErrors('description')} ? 'form-control is-invalid' : 'form-control'"
+                                  placeholder="Опишите требования к вакансии..."></textarea>
+                        <div th:if="${#fields.hasErrors('description')}" class="invalid-feedback">
+                            <span th:errors="*{description}"></span>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label for="city" class="form-label">Город</label>
+                            <input type="text" id="city" th:field="*{city}"
+                                   th:class="${#fields.hasErrors('city')} ? 'form-control is-invalid' : 'form-control'"
+                                   placeholder="Например: Москва">
+                            <div th:if="${#fields.hasErrors('city')}" class="invalid-feedback">
+                                <span th:errors="*{city}"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="schedule" class="form-label">График работы</label>
+                            <select id="schedule" th:field="*{schedule}" class="form-select">
+                                <option value="">— Не указан —</option>
+                                <option th:each="s : ${schedules}" th:value="${s}" th:text="${s.displayName}"></option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label for="salaryFrom" class="form-label">Зарплата от</label>
+                            <input type="number" id="salaryFrom" th:field="*{salaryFrom}"
+                                   th:class="${#fields.hasErrors('salaryFrom')} ? 'form-control is-invalid' : 'form-control'"
+                                   placeholder="Например: 100000" min="0">
+                            <div th:if="${#fields.hasErrors('salaryFrom')}" class="invalid-feedback">
+                                <span th:errors="*{salaryFrom}"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="salaryTo" class="form-label">Зарплата до</label>
+                            <input type="number" id="salaryTo" th:field="*{salaryTo}"
+                                   th:class="${#fields.hasErrors('salaryTo')} ? 'form-control is-invalid' : 'form-control'"
+                                   placeholder="Например: 200000" min="0">
+                            <div th:if="${#fields.hasErrors('salaryTo')}" class="invalid-feedback">
+                                <span th:errors="*{salaryTo}"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label for="vacancyLevel" class="form-label">Уровень <span style="color:var(--copper)">*</span></label>
+                            <select id="vacancyLevel" th:field="*{vacancyLevel}"
+                                    th:class="${#fields.hasErrors('vacancyLevel')} ? 'form-select is-invalid' : 'form-select'">
+                                <option value="">— Выберите уровень —</option>
+                                <option th:each="level : ${levels}" th:value="${level}" th:text="${level}"></option>
+                            </select>
+                            <div th:if="${#fields.hasErrors('vacancyLevel')}" class="invalid-feedback">
+                                <span th:errors="*{vacancyLevel}"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="companyId" class="form-label">Компания <span style="color:var(--copper)">*</span></label>
+                            <select id="companyId" th:field="*{companyId}"
+                                    th:class="${#fields.hasErrors('companyId')} ? 'form-select is-invalid' : 'form-select'">
+                                <option value="">— Выберите компанию —</option>
+                                <option th:each="company : ${companies}"
+                                        th:value="${company.id}"
+                                        th:text="${company.name}"></option>
+                            </select>
+                            <div th:if="${#fields.hasErrors('companyId')}" class="invalid-feedback">
+                                <span th:errors="*{companyId}"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="skills" class="form-label">Навыки</label>
+                        <select id="skills" th:field="*{skills}" multiple="multiple"
+                                th:class="${#fields.hasErrors('skills')} ? 'form-select is-invalid' : 'form-select'">
+                            <option th:each="skill : ${vacancyRequest.skills}"
+                                    th:value="${skill}" th:text="${skill}"></option>
+                        </select>
+                        <div class="form-text">Введите название навыка и нажмите Enter. Например: Java, Spring Boot, SQL</div>
+                        <div th:if="${#fields.hasErrors('skills')}" class="invalid-feedback">
+                            <span th:errors="*{skills}"></span>
+                        </div>
+                    </div>
+
+                    <hr style="border-color:var(--border);margin:1.75rem 0;">
+
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h2 style="font-family:var(--font-display);font-size:1rem;font-weight:400;margin:0;">Вопросы для собеседования</h2>
+                            <button type="button" class="btn btn-sm btn-outline-primary" id="addQuestionBtn">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                                Добавить вопрос
+                            </button>
+                        </div>
+                        <div id="questionsContainer"></div>
+                        <p id="noQuestionsMsg" class="text-muted" style="font-size:.875rem;text-align:center;margin:0;">
+                            Вопросы не добавлены
+                        </p>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">Сохранить</button>
+                        <a href="/vacancy" class="btn btn-outline-secondary">Отмена</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </div>
+  </main>
+</th:block>
+<th:block th:fragment="extra-scripts">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet">
+    <div id="existingQuestionsData" style="display:none">
+        <span th:each="q : ${vacancyRequest.questions}"
+              class="q-data"
+              th:attr="data-text=${q.text},data-difficulty=${q.difficulty},data-category=${q.category}"></span>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="/js/vacancy-form.js"></script>
+</th:block>
+</body>
+</html>

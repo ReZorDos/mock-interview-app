@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<body>
+<footer th:fragment="footer" class="site-footer">
+    <div class="container">
+        <div class="site-footer__grid">
+            <div>
+                <span class="site-footer__brand">
+                    <svg viewBox="0 0 24 24"><path d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>
+                    MockInterview
+                </span>
+                <p class="site-footer__desc">Платформа для подготовки к техническим интервью. Записывайте ответы, получайте обратную связь и развивайтесь.</p>
+            </div>
+            <div>
+                <p class="site-footer__col-title">Навигация</p>
+                <ul class="site-footer__links">
+                    <li><a href="/home">Главная</a></li>
+                    <li><a href="/vacancy">Вакансии</a></li>
+                    <li><a href="/company/browse">Компании</a></li>
+                    <li><a href="/profile">Профиль</a></li>
+                </ul>
+            </div>
+            <div>
+                <p class="site-footer__col-title">Инструменты</p>
+                <ul class="site-footer__links">
+                    <li><a sec:authorize="hasRole('USER')" href="/feedback/my">Мои отклики</a></li>
+                    <li><a sec:authorize="hasRole('INTERVIEWER')" href="/vacancy/my">Мои вакансии</a></li>
+                    <li><a sec:authorize="hasRole('INTERVIEWER')" href="/company">Управление</a></li>
+                    <li><a sec:authorize="hasRole('INTERVIEWER')" href="/interviewer/screenings">Скрининги</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="site-footer__bottom">
+            <span>&copy; 2026 MockInterview. Все права защищены.</span>
+            <span class="site-footer__pill">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                v2.0
+            </span>
+        </div>
+    </div>
+</footer>
+</body>
+</html>

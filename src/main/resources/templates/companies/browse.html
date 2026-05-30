@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{layout/default :: layout(title='Компании', activeLink='companies', content=~{:: content}, scripts=null)}">
+<body>
+<th:block th:fragment="content">
+  <main class="site-main">
+    <div class="page-wrap page-wrap--medium">
+
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Компании</h1>
+                <p class="page-subtitle"
+                   th:text="${companies.isEmpty()} ? 'Ничего не найдено' : 'Найдено: ' + ${companies.size()}">
+                </p>
+            </div>
+        </div>
+
+        <form method="get" action="/company/browse" class="mb-4">
+            <div class="input-group">
+                <input type="text"
+                       name="q"
+                       th:value="${q}"
+                       class="form-control"
+                       placeholder="Название компании…"
+                       autocomplete="off">
+                <button type="submit" class="btn btn-primary">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                         stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                    </svg>
+                    Найти
+                </button>
+                <a th:if="${!#strings.isEmpty(q)}" href="/company/browse" class="btn btn-outline-secondary">
+                    Сбросить
+                </a>
+            </div>
+        </form>
+
+        <div th:if="${companies.isEmpty()}" class="empty-state">
+            <div class="empty-state__icon">
+                <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            </div>
+            <h3 class="empty-state__title" th:text="${#strings.isEmpty(q)} ? 'Компаний пока нет' : 'Компании не найдены'"></h3>
+            <p class="empty-state__text" th:text="${#strings.isEmpty(q)} ? 'Зарегистрированных компаний ещё нет' : 'Попробуйте другой запрос'"></p>
+        </div>
+
+        <div th:unless="${companies.isEmpty()}" class="company-grid">
+            <a th:each="c : ${companies}"
+               th:href="@{/company/{id}/vacancies(id=${c.id})}"
+               class="company-card">
+                <div class="company-card__icon">
+                    <img th:if="${c.logoUrl != null and !#strings.isEmpty(c.logoUrl)}"
+                         th:src="${c.logoUrl}" th:alt="${c.name}" loading="lazy">
+                    <svg th:unless="${c.logoUrl != null and !#strings.isEmpty(c.logoUrl)}"
+                         viewBox="0 0 24 24">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+                        <polyline points="9 22 9 12 15 12 15 22"/>
+                    </svg>
+                </div>
+                <span class="company-card__name" th:text="${c.name}"></span>
+                <p th:if="${c.description != null and !#strings.isEmpty(c.description)}"
+                   class="company-card__desc"
+                   th:text="${#strings.length(c.description) > 100 ? #strings.substring(c.description, 0, 100) + '…' : c.description}"></p>
+                <div class="company-card__footer">
+                    <span class="company-card__vacancies">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="3" width="18" height="18" rx="2"/>
+                            <path d="M3 9h18M9 21V9"/>
+                        </svg>
+                        <span th:text="${#lists.size(c.vacancyList)} + ' ' + (${#lists.size(c.vacancyList) == 1} ? 'вакансия' : (${#lists.size(c.vacancyList) >= 2 and #lists.size(c.vacancyList) <= 4} ? 'вакансии' : 'вакансий'))"></span>
+                    </span>
+                </div>
+            </a>
+        </div>
+
+    </div>
+  </main>
+</th:block>
+</body>
+</html>

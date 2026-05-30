@@ -1,0 +1,23 @@
+databaseChangeLog:
+  - changeSet:
+      id: 3
+      author: rezordos
+      changes:
+        - addColumn:
+            tableName: company
+            columns:
+              - column: { name: user_id, type: UUID }
+        - addForeignKeyConstraint:
+            constraintName: fk_company_user
+            baseTableName: company
+            baseColumnNames: user_id
+            referencedTableName: users
+            referencedColumnNames: id
+            onDelete: SET NULL
+        - dropUniqueConstraint:
+            tableName: company
+            constraintName: uq_company_name
+        - addUniqueConstraint:
+            tableName: company
+            columnNames: name, user_id
+            constraintName: uq_company_name_user

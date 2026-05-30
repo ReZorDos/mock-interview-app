@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="pagination(currentPage, totalPages, baseUrl, extraParams)"
+     th:if="${totalPages > 1}"
+     class="pagination-bar">
+    <a th:if="${currentPage > 1}"
+       th:href="${baseUrl + '?page=' + (currentPage - 1) + extraParams}"
+       class="pagination-bar__page">←</a>
+    <div class="pagination-bar__pages">
+        <th:block th:each="i : ${#numbers.sequence(1, totalPages)}">
+            <a th:if="${i >= currentPage - 2 and i <= currentPage + 2}"
+               th:href="${baseUrl + '?page=' + i + extraParams}"
+               th:text="${i}"
+               th:class="${'pagination-bar__page' + (i == currentPage ? ' pagination-bar__page--active' : '')}"></a>
+        </th:block>
+    </div>
+    <a th:if="${currentPage < totalPages}"
+       th:href="${baseUrl + '?page=' + (currentPage + 1) + extraParams}"
+       class="pagination-bar__page">→</a>
+</div>
+</body>
+</html>

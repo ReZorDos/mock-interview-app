@@ -1,0 +1,32 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-user-profile-table
+      author: rezordos
+      changes:
+        - createTable:
+            tableName: user_profile
+            columns:
+              - column: { name: id, type: UUID, defaultValueComputed: "gen_random_uuid()" }
+              - column: { name: created_at, type: TIMESTAMP, defaultValueComputed: "CURRENT_TIMESTAMP", constraints: { nullable: false } }
+              - column: { name: updated_at, type: TIMESTAMP }
+              - column: { name: user_id, type: UUID, constraints: { nullable: false } }
+              - column: { name: age, type: INT }
+              - column: { name: education, type: VARCHAR(500) }
+              - column: { name: experience, type: TEXT }
+              - column: { name: about_me, type: TEXT }
+              - column: { name: skills, type: TEXT }
+        - addPrimaryKey:
+            tableName: user_profile
+            columnNames: id
+            constraintName: pk_user_profile
+        - addForeignKeyConstraint:
+            constraintName: fk_user_profile_user
+            baseTableName: user_profile
+            baseColumnNames: user_id
+            referencedTableName: users
+            referencedColumnNames: id
+            onDelete: CASCADE
+        - addUniqueConstraint:
+            tableName: user_profile
+            columnNames: user_id
+            constraintName: uq_user_profile_user

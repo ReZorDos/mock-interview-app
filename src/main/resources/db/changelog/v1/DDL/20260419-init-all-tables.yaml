@@ -1,0 +1,326 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1
+      author: rezordos
+      changes:
+        # Таблица company
+        - createTable:
+            tableName: company
+            columns:
+              - column: { name: id, type: UUID, defaultValueComputed: "gen_random_uuid()" }
+              - column: { name: created_at, type: TIMESTAMP, defaultValueComputed: "CURRENT_TIMESTAMP", constraints: { nullable: false } }
+              - column: { name: updated_at, type: TIMESTAMP }
+              - column: { name: name, type: VARCHAR(100), constraints: { nullable: false } }
+              - column: { name: description, type: VARCHAR(500) }
+              - column: { name: logo_url, type: VARCHAR(255) }
+              - column: { name: is_active, type: BOOLEAN, constraints: { nullable: false } }
+        - addPrimaryKey:
+            tableName: company
+            columnNames: id
+            constraintName: pk_company
+        - addUniqueConstraint:
+            tableName: company
+            columnNames: name
+            constraintName: uq_company_name
+
+        # Таблица users (согласно модели User)
+        - createTable:
+            tableName: users
+            columns:
+              - column: { name: id, type: UUID, defaultValueComputed: "gen_random_uuid()" }
+              - column: { name: created_at, type: TIMESTAMP, defaultValueComputed: "CURRENT_TIMESTAMP", constraints: { nullable: false } }
+              - column: { name: updated_at, type: TIMESTAMP }
+              - column: { name: name, type: VARCHAR(255) }
+              - column: { name: username, type: VARCHAR(255) }
+              - column: { name: password, type: VARCHAR(255) }
+        - addPrimaryKey:
+            tableName: users
+            columnNames: id
+            constraintName: pk_users
+
+        # Таблица role
+        - createTable:
+            tableName: role
+            columns:
+              - column: { name: id, type: UUID, defaultValueComputed: "gen_random_uuid()" }
+              - column: { name: created_at, type: TIMESTAMP, defaultValueComputed: "CURRENT_TIMESTAMP", constraints: { nullable: false } }
+              - column: { name: updated_at, type: TIMESTAMP }
+              - column: { name: name, type: VARCHAR(255), constraints: { nullable: false, unique: true } }
+        - addPrimaryKey:
+            tableName: role
+            columnNames: id
+            constraintName: pk_role
+        - addUniqueConstraint:
+            tableName: role
+            columnNames: name
+            constraintName: uq_role_name
+
+        # Таблица user_roles (many-to-many)
+        - createTable:
+            tableName: user_roles
+            columns:
+              - column: { name: user_id, type: UUID, constraints: { nullable: false } }
+              - column: { name: role_id, type: UUID, constraints: { nullable: false } }
+        - addPrimaryKey:
+            tableName: user_roles
+            columnNames: user_id, role_id
+            constraintName: pk_user_roles
+        - addForeignKeyConstraint:
+            constraintName: fk_user_roles_user
+            baseTableName: user_roles
+            baseColumnNames: user_id
+            referencedTableName: users
+            referencedColumnNames: id
+            onDelete: CASCADE
+        - addForeignKeyConstraint:
+            constraintName: fk_user_roles_role
+            baseTableName: user_roles
+            baseColumnNames: role_id
+            referencedTableName: role
+            referencedColumnNames: id
+            onDelete: CASCADE
+
+        # Таблица vacancy
+        - createTable:
+            tableName: vacancy
+            columns:
+              - column: { name: id, type: UUID, defaultValueComputed: "gen_random_uuid()" }
+              - column: { name: created_at, type: TIMESTAMP, defaultValueComputed: "CURRENT_TIMESTAMP", constraints: { nullable: false } }
+              - column: { name: updated_at, type: TIMESTAMP }
+              - column: { name: title, type: VARCHAR(150), constraints: { nullable: false } }
+              - column: { name: description, type: TEXT, constraints: { nullable: true } }
+              - column: { name: vacancy_level, type: VARCHAR(50), constraints: { nullable: false } }
+              - column: { name: company_id, type: UUID, constraints: { nullable: false } }
+              - column: { name: user_id, type: UUID }
+        - addPrimaryKey:
+            tableName: vacancy
+            columnNames: id
+            constraintName: pk_vacancy
+        - addForeignKeyConstraint:
+            constraintName: fk_vacancy_company
+            baseTableName: vacancy
+            baseColumnNames: company_id
+            referencedTableName: company
+            referencedColumnNames: id
+            onDelete: CASCADE
+        - addForeignKeyConstraint:
+            constraintName: fk_vacancy_user
+            baseTableName: vacancy
+            baseColumnNames: user_id
+            referencedTableName: users
+            referencedColumnNames: id
+            onDelete: SET NULL
+
+        # Таблица skill
+        - createTable:
+            tableName: skill
+            columns:
+              - column: { name: id, type: UUID, defaultValueComputed: "gen_random_uuid()" }
+              - column: { name: created_at, type: TIMESTAMP, defaultValueComputed: "CURRENT_TIMESTAMP", constraints: { nullable: false } }
+              - column: { name: updated_at, type: TIMESTAMP }
+              - column: { name: name, type: VARCHAR(60), constraints: { nullable: false } }
+        - addPrimaryKey:
+            tableName: skill
+            columnNames: id
+            constraintName: pk_skill
+
+        # Таблица vacancy_skill
+        - createTable:
+            tableName: vacancy_skill
+            columns:
+              - column: { name: vacancy_id, type: UUID, constraints: { nullable: false } }
+              - column: { name: skill_id, type: UUID, constraints: { nullable: false } }
+        - addPrimaryKey:
+            tableName: vacancy_skill
+            columnNames: vacancy_id, skill_id
+            constraintName: pk_vacancy_skill
+        - addForeignKeyConstraint:
+            constraintName: fk_vacancy_skill_vacancy
+            baseTableName: vacancy_skill
+            baseColumnNames: vacancy_id
+            referencedTableName: vacancy
+            referencedColumnNames: id
+            onDelete: CASCADE
+        - addForeignKeyConstraint:
+            constraintName: fk_vacancy_skill_skill
+            baseTableName: vacancy_skill
+            baseColumnNames: skill_id
+            referencedTableName: skill
+            referencedColumnNames: id
+            onDelete: CASCADE
+
+        # Таблица question
+        - createTable:
+            tableName: question
+            columns:
+              - column: { name: id, type: UUID, defaultValueComputed: "gen_random_uuid()" }
+              - column: { name: created_at, type: TIMESTAMP, defaultValueComputed: "CURRENT_TIMESTAMP", constraints: { nullable: false } }
+              - column: { name: updated_at, type: TIMESTAMP }
+              - column: { name: text, type: TEXT, constraints: { nullable: false } }
+              - column: { name: difficulty, type: VARCHAR(50), constraints: { nullable: false } }
+              - column: { name: category, type: VARCHAR(100) }
+              - column: { name: vacancy_id, type: UUID, constraints: { nullable: false } }
+        - addPrimaryKey:
+            tableName: question
+            columnNames: id
+            constraintName: pk_question
+        - addForeignKeyConstraint:
+            constraintName: fk_question_vacancy
+            baseTableName: question
+            baseColumnNames: vacancy_id
+            referencedTableName: vacancy
+            referencedColumnNames: id
+            onDelete: CASCADE
+
+        # Таблица user_progress
+        - createTable:
+            tableName: user_progress
+            columns:
+              - column: { name: id, type: UUID, defaultValueComputed: "gen_random_uuid()" }
+              - column: { name: created_at, type: TIMESTAMP, defaultValueComputed: "CURRENT_TIMESTAMP", constraints: { nullable: false } }
+              - column: { name: updated_at, type: TIMESTAMP }
+              - column: { name: user_id, type: UUID, constraints: { nullable: false } }
+              - column: { name: vacancy_id, type: UUID, constraints: { nullable: false } }
+              - column: { name: started_at, type: TIMESTAMP, constraints: { nullable: false } }
+              - column: { name: finished_at, type: TIMESTAMP }
+              - column: { name: current_question_index, type: INT, defaultValue: "0" }
+        - addPrimaryKey:
+            tableName: user_progress
+            columnNames: id
+            constraintName: pk_user_progress
+        - addForeignKeyConstraint:
+            constraintName: fk_user_progress_user
+            baseTableName: user_progress
+            baseColumnNames: user_id
+            referencedTableName: users
+            referencedColumnNames: id
+            onDelete: CASCADE
+        - addForeignKeyConstraint:
+            constraintName: fk_user_progress_vacancy
+            baseTableName: user_progress
+            baseColumnNames: vacancy_id
+            referencedTableName: vacancy
+            referencedColumnNames: id
+            onDelete: CASCADE
+
+        # Таблица audio_file
+        - createTable:
+            tableName: audio_file
+            columns:
+              - column: { name: id, type: UUID, defaultValueComputed: "gen_random_uuid()" }
+              - column: { name: created_at, type: TIMESTAMP, defaultValueComputed: "CURRENT_TIMESTAMP", constraints: { nullable: false } }
+              - column: { name: updated_at, type: TIMESTAMP }
+              - column: { name: file_path, type: VARCHAR(500), constraints: { nullable: false } }
+              - column: { name: original_filename, type: VARCHAR(255) }
+              - column: { name: file_size_bytes, type: BIGINT }
+              - column: { name: duration_seconds, type: DOUBLE }
+              - column: { name: compression_status, type: VARCHAR(50) }
+        - addPrimaryKey:
+            tableName: audio_file
+            columnNames: id
+            constraintName: pk_audio_file
+
+        # Таблица user_answer
+        - createTable:
+            tableName: user_answer
+            columns:
+              - column: { name: id, type: UUID, defaultValueComputed: "gen_random_uuid()" }
+              - column: { name: created_at, type: TIMESTAMP, defaultValueComputed: "CURRENT_TIMESTAMP", constraints: { nullable: false } }
+              - column: { name: updated_at, type: TIMESTAMP }
+              - column: { name: progress_id, type: UUID, constraints: { nullable: false } }
+              - column: { name: question_id, type: UUID, constraints: { nullable: false } }
+              - column: { name: transcribed_text, type: TEXT }
+              - column: { name: recorded_at, type: TIMESTAMP, constraints: { nullable: false } }
+              - column: { name: audio_file_id, type: UUID }
+        - addPrimaryKey:
+            tableName: user_answer
+            columnNames: id
+            constraintName: pk_user_answer
+        - addForeignKeyConstraint:
+            constraintName: fk_user_answer_progress
+            baseTableName: user_answer
+            baseColumnNames: progress_id
+            referencedTableName: user_progress
+            referencedColumnNames: id
+            onDelete: CASCADE
+        - addForeignKeyConstraint:
+            constraintName: fk_user_answer_question
+            baseTableName: user_answer
+            baseColumnNames: question_id
+            referencedTableName: question
+            referencedColumnNames: id
+            onDelete: CASCADE
+        - addForeignKeyConstraint:
+            constraintName: fk_user_answer_audio_file
+            baseTableName: user_answer
+            baseColumnNames: audio_file_id
+            referencedTableName: audio_file
+            referencedColumnNames: id
+            onDelete: SET NULL
+        - addUniqueConstraint:
+            tableName: user_answer
+            columnNames: audio_file_id
+            constraintName: uq_user_answer_audio_file
+
+        # Таблица recruiter_review
+        - createTable:
+            tableName: recruiter_review
+            columns:
+              - column: { name: id, type: UUID, defaultValueComputed: "gen_random_uuid()" }
+              - column: { name: created_at, type: TIMESTAMP, defaultValueComputed: "CURRENT_TIMESTAMP", constraints: { nullable: false } }
+              - column: { name: updated_at, type: TIMESTAMP }
+              - column: { name: progress_id, type: UUID, constraints: { nullable: false } }
+              - column: { name: comment, type: TEXT }
+              - column: { name: rating, type: INT, constraints: { nullable: false } }
+        - addPrimaryKey:
+            tableName: recruiter_review
+            columnNames: id
+            constraintName: pk_recruiter_review
+        - addForeignKeyConstraint:
+            constraintName: fk_recruiter_review_progress
+            baseTableName: recruiter_review
+            baseColumnNames: progress_id
+            referencedTableName: user_progress
+            referencedColumnNames: id
+            onDelete: CASCADE
+        - addUniqueConstraint:
+            tableName: recruiter_review
+            columnNames: progress_id
+            constraintName: uq_recruiter_review_progress
+
+  - changeSet:
+      id: 2
+      author: rezordos
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - columnExists:
+                tableName: users
+                columnName: role
+      changes:
+        - addColumn:
+            tableName: users
+            columns:
+              - column: { name: role, type: VARCHAR(50), defaultValue: "USER", constraints: { nullable: false } }
+
+  - changeSet:
+      id: 3-drop-user-roles
+      author: rezordos
+      preConditions:
+        - onFail: MARK_RAN
+        - tableExists:
+            tableName: user_roles
+      changes:
+        - dropTable:
+            tableName: user_roles
+
+  - changeSet:
+      id: 4-drop-role
+      author: rezordos
+      preConditions:
+        - onFail: MARK_RAN
+        - tableExists:
+            tableName: role
+      changes:
+        - dropTable:
+            tableName: role

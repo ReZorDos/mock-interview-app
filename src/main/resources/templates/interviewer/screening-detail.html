@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{layout/default :: layout(title='Скрининг — ' + ${detail.candidateName}, activeLink='screenings', content=~{:: content}, scripts=~{:: extra-scripts})}">
+<body>
+<th:block th:fragment="content">
+  <main class="site-main">
+    <div class="page-wrap page-wrap--medium">
+
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/interviewer/screenings">Скрининги</a></li>
+                <li class="breadcrumb-item active" th:text="${detail.candidateName}"></li>
+            </ol>
+        </nav>
+
+        <div class="card mb-4">
+            <div class="card-header">Информация о скрининге</div>
+            <div class="card-body">
+                <dl class="dl-detail row mb-0">
+                    <dt class="col-sm-3">Кандидат</dt>
+                    <dd class="col-sm-9" th:text="${detail.candidateName}"></dd>
+                    <dt class="col-sm-3">Вакансия</dt>
+                    <dd class="col-sm-9" th:text="${detail.vacancyTitle}"></dd>
+                    <dt class="col-sm-3">Начат</dt>
+                    <dd class="col-sm-9" th:text="${#temporals.format(detail.startedAt, 'dd.MM.yyyy HH:mm')}"></dd>
+                    <dt class="col-sm-3">Завершён</dt>
+                    <dd class="col-sm-9 mb-0" th:text="${#temporals.format(detail.finishedAt, 'dd.MM.yyyy HH:mm')}"></dd>
+                </dl>
+            </div>
+        </div>
+
+        <ul class="nav nav-tabs mb-4" id="screeningTabs">
+            <li class="nav-item">
+                <button class="nav-link active" id="answers-tab"
+                        data-bs-toggle="tab" data-bs-target="#answers" type="button">
+                    Ответы
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" id="candidate-tab"
+                        data-bs-toggle="tab" data-bs-target="#candidate" type="button">
+                    Анкета кандидата
+                    <span th:unless="${detail.candidateProfile.isEmpty()}"
+                          style="background:var(--emerald);color:#fff;border-radius:4px;
+                                 font-size:.7rem;padding:1px 6px;margin-left:4px;">&#10003;</span>
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" id="feedback-tab"
+                        data-bs-toggle="tab" data-bs-target="#feedback" type="button">
+                    Обратная связь
+                    <span th:if="${detail.hasReview()}"
+                          style="background:var(--emerald);color:#fff;border-radius:4px;
+                                 font-size:.7rem;padding:1px 6px;margin-left:4px;">&#10003;</span>
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="screeningTabsContent">
+
+            <div class="tab-pane fade show active" id="answers">
+                <div th:each="answer, stat : ${detail.answers}" class="card mb-3">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span th:text="'Вопрос ' + ${stat.index + 1}"></span>
+                        <div class="d-flex gap-1">
+                            <span th:if="${answer.category != null and !#strings.isEmpty(answer.category)}"
+                                  class="badge bg-secondary" th:text="${answer.category}"></span>
+                            <span th:text="${answer.difficulty}"
+                                  th:class="${'badge ' + (answer.difficulty == 'EASY' ? 'bg-success' : (answer.difficulty == 'MEDIUM' ? 'bg-warning' : 'bg-danger'))}"></span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-3" style="color:var(--ink);font-weight:500;" th:text="${answer.questionText}"></p>
+
+                        <div th:if="${answer.hasAudio()}" class="mb-3">
+                            <p class="text-muted mb-1" style="font-size:.8125rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;">Аудиоответ</p>
+                            <audio controls th:src="${answer.audioUrl}"></audio>
+                        </div>
+                        <p th:unless="${answer.hasAudio()}"
+                           class="text-muted mb-3" style="font-size:.875rem;">Аудио не записано</p>
+
+                        <div th:if="${answer.hasTranscription()}"
+                             style="background:var(--ivory);border:1px solid var(--border);border-radius:var(--r-sm);padding:1rem;">
+                            <p class="text-muted mb-1" style="font-size:.8125rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;">Расшифровка</p>
+                            <p class="mb-0" th:text="${answer.transcribedText}"></p>
+                        </div>
+
+                        <div th:if="${answer.isProcessing()}" class="d-flex align-items-center gap-2"
+                             style="font-size:.875rem;color:var(--ink-light);">
+                            <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                            <span>Расшифровка выполняется...</span>
+                        </div>
+
+                        <div th:if="${answer.isFailed()}" class="d-flex align-items-center gap-3">
+                            <span class="text-danger" style="font-size:.875rem;">Ошибка расшифровки</span>
+                            <form th:if="${answer.hasAudio() and answer.answerId != null}"
+                                  th:action="@{/interviewer/screenings/{pid}/answers/{aid}/transcribe(pid=${detail.progressId},aid=${answer.answerId})}"
+                                  method="post">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Повторить</button>
+                            </form>
+                        </div>
+
+                        <div th:unless="${answer.hasTranscription() or answer.isProcessing() or answer.isFailed()}"
+                             class="d-flex align-items-center gap-3">
+                            <span class="text-muted" style="font-size:.875rem;">Расшифровка не выполнена</span>
+                            <form th:if="${answer.hasAudio() and answer.answerId != null}"
+                                  th:action="@{/interviewer/screenings/{pid}/answers/{aid}/transcribe(pid=${detail.progressId},aid=${answer.answerId})}"
+                                  method="post">
+                                <button type="submit" class="btn btn-sm btn-outline-primary">Расшифровать</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="candidate">
+                <div th:if="${detail.candidateProfile.isEmpty()}" class="empty-state">
+                    <div class="empty-state__icon">
+                        <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    </div>
+                    <h3 class="empty-state__title">Анкета не заполнена</h3>
+                    <p class="empty-state__text">Кандидат ещё не заполнил анкету профиля</p>
+                </div>
+
+                <div th:unless="${detail.candidateProfile.isEmpty()}">
+                    <div class="card mb-3">
+                        <div class="card-header">Личная информация</div>
+                        <div class="card-body">
+                            <dl class="dl-detail row mb-0">
+                                <th:block th:if="${detail.candidateProfile.age != null}">
+                                    <dt class="col-sm-3">Возраст</dt>
+                                    <dd class="col-sm-9" th:text="${detail.candidateProfile.age + ' лет'}"></dd>
+                                </th:block>
+                                <th:block th:if="${detail.candidateProfile.education != null and !#strings.isEmpty(detail.candidateProfile.education)}">
+                                    <dt class="col-sm-3">Образование</dt>
+                                    <dd class="col-sm-9" th:text="${detail.candidateProfile.education}"></dd>
+                                </th:block>
+                                <th:block th:if="${detail.candidateProfile.skills != null and !detail.candidateProfile.skills.isEmpty()}">
+                                    <dt class="col-sm-3">Навыки</dt>
+                                    <dd class="col-sm-9">
+                                        <span th:each="skill : ${detail.candidateProfile.skills}"
+                                              class="badge bg-secondary me-1 mb-1"
+                                              th:text="${skill}"></span>
+                                    </dd>
+                                </th:block>
+                            </dl>
+                        </div>
+                    </div>
+
+                    <div th:if="${detail.candidateProfile.experience != null and !#strings.isEmpty(detail.candidateProfile.experience)}"
+                         class="card mb-3">
+                        <div class="card-header">Опыт работы</div>
+                        <div class="card-body">
+                            <p class="mb-0" style="white-space:pre-wrap;line-height:1.7;"
+                               th:text="${detail.candidateProfile.experience}"></p>
+                        </div>
+                    </div>
+
+                    <div th:if="${detail.candidateProfile.aboutMe != null and !#strings.isEmpty(detail.candidateProfile.aboutMe)}"
+                         class="card">
+                        <div class="card-header">О себе</div>
+                        <div class="card-body">
+                            <p class="mb-0" style="white-space:pre-wrap;line-height:1.7;"
+                               th:text="${detail.candidateProfile.aboutMe}"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="feedback">
+
+                <div th:if="${detail.hasReview()}" class="mb-4">
+                    <div th:class="${'alert ' + (detail.reviewDecision.name() == 'ACCEPTED' ? 'alert-success' : 'alert-danger')}">
+                        <strong th:text="${detail.reviewDecision.name() == 'ACCEPTED' ? 'Принято' : 'Отказ'}"></strong>
+                        <span class="ms-2" style="font-size:.875rem;opacity:.75;"
+                              th:text="${'· ' + #temporals.format(detail.reviewedAt, 'dd.MM.yyyy HH:mm')}"></span>
+                    </div>
+                    <div th:if="${detail.reviewComment != null and !#strings.isEmpty(detail.reviewComment)}"
+                         style="background:var(--ivory);border:1px solid var(--border);border-radius:var(--r-sm);padding:1rem;margin-bottom:1.5rem;">
+                        <p class="text-muted mb-1" style="font-size:.8125rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;">Комментарий</p>
+                        <p class="mb-0" th:text="${detail.reviewComment}"></p>
+                    </div>
+                    <p class="text-muted" style="font-size:.875rem;margin-bottom:1.5rem;">
+                        Вы уже отправили обратную связь. Заполните форму ниже, чтобы изменить её.
+                    </p>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">Оставить обратную связь</div>
+                    <div class="card-body">
+                        <form th:action="@{/interviewer/screenings/{id}/feedback(id=${detail.progressId})}"
+                              method="post">
+                            <div class="mb-4">
+                                <label class="form-label">Решение <span style="color:var(--copper)">*</span></label>
+                                <div class="d-flex gap-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="decision"
+                                               value="ACCEPTED" id="decisionAccepted"
+                                               th:checked="${detail.reviewDecision != null and detail.reviewDecision.name() == 'ACCEPTED'}">
+                                        <label class="form-check-label" for="decisionAccepted"
+                                               style="color:var(--emerald);font-weight:600;">Принято</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="decision"
+                                               value="REJECTED" id="decisionRejected"
+                                               th:checked="${detail.reviewDecision != null and detail.reviewDecision.name() == 'REJECTED'}">
+                                        <label class="form-check-label" for="decisionRejected"
+                                               style="color:var(--copper);font-weight:600;">Отказ</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mb-4">
+                                <label class="form-label" for="comment">Комментарий для кандидата</label>
+                                <textarea class="form-control" id="comment" name="comment" rows="6"
+                                          placeholder="Напишите обратную связь..."
+                                          th:text="${detail.reviewComment}"></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary"
+                                    th:text="${detail.hasReview() ? 'Обновить обратную связь' : 'Отправить обратную связь'}">
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+  </main>
+</th:block>
+<th:block th:fragment="extra-scripts">
+    <script src="/js/screening-detail.js"></script>
+</th:block>
+</body>
+</html>

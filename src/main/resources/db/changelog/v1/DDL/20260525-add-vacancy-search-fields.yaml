@@ -1,0 +1,12 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-vacancy-search-fields
+      author: rezordos
+      changes:
+        - addColumn:
+            tableName: vacancy
+            columns:
+              - column: { name: city, type: VARCHAR(100) }
+              - column: { name: salary_from, type: INTEGER }
+              - column: { name: salary_to, type: INTEGER }
+              - column: { name: schedule, type: VARCHAR(20) }

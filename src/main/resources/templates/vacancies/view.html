@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{layout/default :: layout(title=${vacancy.title}, activeLink='vacancies', content=~{:: content}, scripts=null)}">
+<body>
+<th:block th:fragment="content">
+  <main class="site-main">
+    <div class="page-wrap page-wrap--medium">
+
+        <div th:if="${error}" class="alert alert-warning mb-4" th:text="${error}"></div>
+
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/vacancy">Вакансии</a></li>
+                <li class="breadcrumb-item active" th:text="${vacancy.title}"></li>
+            </ol>
+        </nav>
+
+        <div class="page-header">
+            <div>
+                <h1 class="page-title mb-2" th:text="${vacancy.title}"></h1>
+                <span th:text="${vacancy.vacancyLevel}"
+                      th:class="${'badge ' + (vacancy.vacancyLevel == 'JUNIOR' ? 'bg-success' : (vacancy.vacancyLevel == 'MIDDLE' ? 'bg-warning' : 'bg-danger'))}"></span>
+                <span th:if="${vacancy.archived}" class="badge bg-secondary ms-1">В архиве</span>
+            </div>
+            <div class="d-flex gap-2 flex-wrap">
+                <a sec:authorize="hasRole('USER')"
+                   th:if="${!vacancy.archived}"
+                   th:href="@{/screening/instructions/{id}(id=${vacancy.id})}"
+                   class="btn btn-primary">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                    Пройти скрининг
+                </a>
+                <span sec:authorize="hasRole('USER')"
+                      th:if="${vacancy.archived}"
+                      class="badge bg-secondary align-self-center px-3 py-2">Скрининг недоступен</span>
+                <a sec:authorize="hasRole('INTERVIEWER')"
+                   th:unless="${vacancy.archived}"
+                   th:href="@{/vacancy/{id}/edit(id=${vacancy.id})}"
+                   class="btn btn-outline-secondary">Изменить</a>
+                <form sec:authorize="hasRole('INTERVIEWER')"
+                      th:unless="${vacancy.archived}"
+                      th:action="@{/vacancy/{id}/archive(id=${vacancy.id})}"
+                      method="post" class="d-inline">
+                    <button type="submit" class="btn btn-outline-warning">В архив</button>
+                </form>
+                <form sec:authorize="hasRole('INTERVIEWER')"
+                      th:if="${vacancy.archived}"
+                      th:action="@{/vacancy/{id}/unarchive(id=${vacancy.id})}"
+                      method="post" class="d-inline">
+                    <button type="submit" class="btn btn-outline-success">Из архива</button>
+                </form>
+                <form sec:authorize="hasRole('INTERVIEWER')"
+                      th:action="@{/vacancy/{id}/delete(id=${vacancy.id})}"
+                      method="post"
+                      onsubmit="return confirm('Удалить вакансию?')">
+                    <button type="submit" class="btn btn-outline-danger">Удалить</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">Детали вакансии</div>
+            <div class="card-body">
+                <dl class="dl-detail row">
+                    <dt class="col-sm-3">Компания</dt>
+                    <dd class="col-sm-9" th:text="${vacancy.company.name}"></dd>
+
+                    <dt class="col-sm-3" th:if="${vacancy.city != null and !#strings.isEmpty(vacancy.city)}">Город</dt>
+                    <dd class="col-sm-9" th:if="${vacancy.city != null and !#strings.isEmpty(vacancy.city)}" th:text="${vacancy.city}"></dd>
+
+                    <dt class="col-sm-3" th:if="${vacancy.schedule != null}">График</dt>
+                    <dd class="col-sm-9" th:if="${vacancy.schedule != null}" th:text="${vacancy.schedule.displayName}"></dd>
+
+                    <dt class="col-sm-3" th:if="${vacancy.salaryFrom != null or vacancy.salaryTo != null}">Зарплата</dt>
+                    <dd class="col-sm-9" th:if="${vacancy.salaryFrom != null or vacancy.salaryTo != null}">
+                        <th:block th:if="${vacancy.salaryFrom != null and vacancy.salaryTo != null}"
+                                  th:text="${#numbers.formatInteger(vacancy.salaryFrom,0,'WHITESPACE') + ' – ' + #numbers.formatInteger(vacancy.salaryTo,0,'WHITESPACE') + ' ₽'}"></th:block>
+                        <th:block th:if="${vacancy.salaryFrom != null and vacancy.salaryTo == null}"
+                                  th:text="${'от ' + #numbers.formatInteger(vacancy.salaryFrom,0,'WHITESPACE') + ' ₽'}"></th:block>
+                        <th:block th:if="${vacancy.salaryFrom == null and vacancy.salaryTo != null}"
+                                  th:text="${'до ' + #numbers.formatInteger(vacancy.salaryTo,0,'WHITESPACE') + ' ₽'}"></th:block>
+                    </dd>
+
+                    <dt class="col-sm-3">Описание</dt>
+                    <dd class="col-sm-9" th:text="${vacancy.description != null ? vacancy.description : '—'}"></dd>
+
+                    <dt class="col-sm-3">Навыки</dt>
+                    <dd class="col-sm-9">
+                        <div th:if="${vacancy.skills != null and !vacancy.skills.isEmpty()}">
+                            <span th:each="skill : ${vacancy.skills}"
+                                  class="badge bg-secondary me-1 mb-1"
+                                  th:text="${skill.name}"></span>
+                        </div>
+                        <span th:unless="${vacancy.skills != null and !vacancy.skills.isEmpty()}" class="text-muted">—</span>
+                    </dd>
+
+                    <dt class="col-sm-3">Создано</dt>
+                    <dd class="col-sm-9" th:text="${#temporals.format(vacancy.createdAt, 'dd.MM.yyyy HH:mm')}"></dd>
+
+                    <dt class="col-sm-3" th:if="${vacancy.updatedAt != null}">Обновлено</dt>
+                    <dd class="col-sm-9" th:if="${vacancy.updatedAt != null}"
+                        th:text="${#temporals.format(vacancy.updatedAt, 'dd.MM.yyyy HH:mm')}"></dd>
+                </dl>
+            </div>
+        </div>
+
+        <div sec:authorize="hasRole('INTERVIEWER')" th:if="${vacancy.questions != null and !vacancy.questions.isEmpty()}">
+            <h2 style="font-family:var(--font-display);font-size:1.25rem;font-weight:400;margin-bottom:1rem;">
+                Вопросы для собеседования
+            </h2>
+            <div th:each="q, stat : ${vacancy.questions}" class="card mb-2">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span th:text="'Вопрос ' + ${stat.index + 1}"></span>
+                    <div class="d-flex gap-1">
+                        <span th:if="${q.category != null and !#strings.isEmpty(q.category)}"
+                              class="badge bg-secondary" th:text="${q.category}"></span>
+                        <span th:text="${q.difficulty}"
+                              th:class="${'badge ' + (q.difficulty.name() == 'EASY' ? 'bg-success' : (q.difficulty.name() == 'MEDIUM' ? 'bg-warning' : 'bg-danger'))}"></span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <p class="mb-0" th:text="${q.text}"></p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+  </main>
+</th:block>
+</body>
+</html>

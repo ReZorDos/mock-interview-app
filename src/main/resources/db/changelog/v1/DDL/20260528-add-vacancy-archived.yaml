@@ -1,0 +1,14 @@
+databaseChangeLog:
+  - changeSet:
+      id: 20260528-add-vacancy-archived
+      author: ReZorDoc
+      changes:
+        - addColumn:
+            tableName: vacancy
+            columns:
+              - column:
+                  name: archived
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false

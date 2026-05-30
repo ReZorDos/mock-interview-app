@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/auth :: layout(title='Войти', content=~{:: content})}">
+<body>
+<th:block th:fragment="content">
+<div class="auth-layout">
+    <div class="auth-layout__brand">
+        <div class="auth-layout__logo">
+            <svg viewBox="0 0 24 24"><path d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>
+            MockInterview
+        </div>
+        <h2 class="auth-layout__tagline">Подготовьтесь к интервью мечты</h2>
+        <p class="auth-layout__desc">Практикуйте технические вопросы, записывайте ответы и получайте экспертную обратную связь от интервьюеров</p>
+        <ul class="auth-layout__features">
+            <li>
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                Реальные вопросы для собеседований
+            </li>
+            <li>
+                <svg viewBox="0 0 24 24"><path d="M12 1a3 3 0 003 3 3 3 0 013 3 3 3 0 01-3 3 3 3 0 01-3 3 3 3 0 01-3-3 3 3 0 01-3-3 3 3 0 013-3 3 3 0 013-3z"/></svg>
+                Запись аудиоответов в браузере
+            </li>
+            <li>
+                <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+                Обратная связь от интервьюера
+            </li>
+        </ul>
+    </div>
+
+    <div class="auth-layout__form-wrap">
+        <div class="auth-card">
+            <div th:if="${param.error}" class="alert alert-danger mb-4">
+                Неверный логин или пароль.
+            </div>
+            <div th:if="${param.expired}" class="alert alert-warning mb-4">
+                Сессия истекла. Пожалуйста, войдите снова.
+            </div>
+            <div th:if="${param.logout}" class="alert alert-success mb-4">
+                Вы успешно вышли из системы.
+            </div>
+
+            <h1 class="auth-heading">Вход в аккаунт</h1>
+
+            <form th:action="@{/login}" method="post">
+                <div class="mb-3">
+                    <label for="username" class="form-label">Имя пользователя <span style="color:var(--copper)">*</span></label>
+                    <input type="text" id="username" name="username" class="form-control"
+                           placeholder="Введите имя пользователя" required autofocus>
+                </div>
+                <div class="mb-4">
+                    <label for="password" class="form-label">Пароль <span style="color:var(--copper)">*</span></label>
+                    <input type="password" id="password" name="password" class="form-control"
+                           placeholder="Введите пароль" required>
+                </div>
+                <button type="submit" class="btn btn-primary w-100 btn-lg">Войти</button>
+            </form>
+
+            <div style="display:flex;align-items:center;gap:.75rem;margin:1.25rem 0;">
+                <hr style="flex:1;margin:0;border-color:var(--border);">
+                <span style="font-size:.8125rem;color:var(--ink-300);white-space:nowrap;">или войдите через</span>
+                <hr style="flex:1;margin:0;border-color:var(--border);">
+            </div>
+
+            <a href="/oauth/yandex"
+               style="display:flex;align-items:center;justify-content:center;gap:.625rem;
+                      width:100%;padding:.6rem 1.125rem;border-radius:var(--r-sm);
+                      border:1.5px solid #e5e5e5;background:#fff;
+                      font-size:.9rem;font-weight:500;color:#1a1a1a;
+                      text-decoration:none;transition:box-shadow .18s ease,border-color .18s ease;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="12" fill="#FC3F1D"/>
+                    <path d="M13.32 6H11.6C9.76 6 8.68 6.96 8.68 8.6c0 1.44.64 2.24 1.96 3.12L11.88 12.6 8.52 18h2.32l3.12-5.08-1.2-.8c-.96-.64-1.48-1.2-1.48-2.16 0-.88.56-1.4 1.52-1.4h.52V18h2V6h-1.68z" fill="#fff"/>
+                </svg>
+                Яндекс
+            </a>
+
+            <hr class="divider">
+            <p class="auth-footer-text">
+                Нет аккаунта?
+                <a href="/register/user">Зарегистрироваться</a>
+                &nbsp;·&nbsp;
+                <a href="/register/interviewer">Как интервьюер</a>
+            </p>
+        </div>
+        <p class="auth-copyright">&copy; 2026 MockInterview</p>
+    </div>
+</div>
+</th:block>
+</body>
+</html>
