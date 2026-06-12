@@ -31,12 +31,12 @@ spring:
     drop-first: false
 yandex:
   oauth:
-    client-id: ${YANDEX_CLIENT_ID:711e9da07b3b4a82bf8ef2ad6482ec05}
-    client-secret: ${YANDEX_CLIENT_SECRET:b6512f1875074a11b874397b1a7f4322}
+    client-id: ${YANDEX_CLIENT_ID}
+    client-secret: ${YANDEX_CLIENT_SECRET}
     redirect-uri: ${YANDEX_REDIRECT_URI:http://localhost:8081/oauth/yandex/callback}
 
 assemblyai:
-  api-key: ${ASSEMBLYAI_API_KEY:4e95859b4c4447cf8e95e98bbbaa8f2d}
+  api-key: ${ASSEMBLYAI_API_KEY}
   base-url: ${ASSEMBLYAI_BASE_URL:https://api.assemblyai.com}
 
 minio:
